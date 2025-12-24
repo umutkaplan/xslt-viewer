@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+
+    <!-- https://milligram.io/ -->
+    <link id="milli-fonts" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
+    <link id="milli-normalize" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css">
+    <link id="milli-css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.css">
+
+    <style>
+        .wrapper .container {
+            max-width: 80rem;
+        }
+
+        .navigation {
+            background: #f4f5f6;
+            border-bottom: .1rem solid #d1d1d1;
+            display: block;
+            height: 5.2rem;
+            left: 0;
+            max-width: 100%;
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 100%;
+            z-index: 2;
+        }
+
+        .wrapper>.container:first-of-type {
+            padding-top: 10rem;
+        }
+
+        .wrapper>.container {
+            padding-bottom: 5rem;
+        }
+
+        nav.navigation .container {
+            padding-top: 0px;
+            padding-bottom: 0px;
+        }
+
+        .navigation .navigation-title, .navigation .title {
+            color: #606c76;
+            font-family: Gotham Rounded A,Gotham Rounded B,Helvetica Neue,Arial,sans-serif;
+            position: relative;
+        }
+
+        .navigation .navigation-link, .navigation .navigation-title, .navigation .title {
+            display: inline;
+            font-size: 1.6rem;
+            line-height: 5.2rem;
+            padding: 0;
+            text-decoration: none;
+        }
+
+        .octocat {
+            border: 0;
+            color: #f4f5f6;
+            fill: #9b4dca;
+            height: 5.2rem;
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 5.2rem;
+            z-index: 2;
+        }
+
+        .octocat-body {
+            fill: #f4f5f6;
+        }
+
+        .footer .nav .link {
+            display: inline-block;
+            margin-left: 1.2rem;
+            padding: 0;
+        }
+
+        .footer .nav .icon {
+            fill: #9b4dca;
+            height: 2rem;
+        }
+
+        .footer .copyright {
+            padding-right: 6rem;
+        }
+
+        .footer .nav {
+            position: absolute;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        label.file-set::after {
+            content: ' ✔︎'
+        }
+    </style>
+
+    <script>
+
+        function removeMilligramCss() {
+            for (let stylesheetId of ['milli-fonts', 'milli-normalize', 'milli-css']) {
+                document.getElementById(stylesheetId).remove();
+            }
+        }
+
+        let xhttp;
+        if (window.ActiveXObject) {
+            xhttp = new ActiveXObject("Msxml2.XMLHTTP");
+        }
+        else {
+            xhttp = new XMLHttpRequest();
+        }
+
+        function loadXMLDoc(filename) {
+            xhttp.open("GET", filename, false);
+            try { xhttp.responseType = "msxml-document" } catch (err) { } // Helping IE11
+            xhttp.send("");
+            return xhttp.responseXML;
+        }
+
+        let xml = null;
+        let xsl = null;
+
+        function displayResult() {            
+            removeMilligramCss();
+
+            // code for IE
+            if (window.ActiveXObject || xhttp.responseType == "msxml-document") {
+                ex = xml.transformNode(xsl);
+                document.getElementById("output").innerHTML = ex;
+            }
+            // code for Chrome, Firefox, Opera, etc.
+            else if (document.implementation && document.implementation.createDocument) {
+                xsltProcessor = new XSLTProcessor();
+                xsltProcessor.importStylesheet(xsl);
+                resultDocument = xsltProcessor.transformToFragment(xml, document);
+                document.getElementById("output").appendChild(resultDocument);
+                document.getElementById("main").remove();
+            }
+        }
+
+        function setButtonDone(buttonId) {
+            document.getElementById(buttonId).classList.add('file-set');
+            document.getElementById(buttonId).classList.add('button-outline');
+        }
+
+        function uploadXml(event) {
+            onFileSelected(event, (doc) => xml = doc)
+            setButtonDone('xml-label');
+        }
+        function uploadXsl(event) {
+            onFileSelected(event, (doc) => xsl = doc)
+            setButtonDone('xsl-label');
+        }
+
+        function onFileSelected(event, handle) {
+            var selectedFile = event.target.files[0];
+            var reader = new FileReader();
+
+            var result = document.getElementById("result");
+
+            reader.onload = function (event) {
+                parser = new DOMParser();
+                xmlDoc = parser.parseFromString(event.target.result, "text/xml");
+                handle(xmlDoc);
+
+                if(xml !== null && xsl !== null) {
+                    document.getElementById('run-button').removeAttribute('disabled');
+                }
+            };
+
+            reader.readAsText(selectedFile);
+        }
+
+
+    </script>
+</head>
+
+<body>
+    <main id="main" class="wrapper">
+        <nav class="navigation">
+            <section class="container">
+                <a class="navigation-title" title="XSLT Viewer"><h1 class="title">XSLT Viewer</h1></a>
+            </section>
+        </nav>
+        <header class="header">
+        </header>
+        <section class="container">
+        </section>
+        <section class="container">
+            <div class="row">
+                <div class="column">
+                    <h3>Step 1: Upload an xml file</h3>
+                    <label id="xml-label" class="button" for="xml-input">Upload XML</label>
+                    <input id="xml-input" style="display: none" accept=".xml" type="file" onchange="uploadXml(event)">
+                </div>
+                <div class="column">
+                    <h3>Step 2: Upload an xslt file</h3>
+                    <label id="xsl-label" class="button" for="xsl-input">Upload .XSL</label>
+                    <input id="xsl-input" style="display: none" accept=".xsl,.xslt" type="file" onchange="uploadXsl(event)">
+                </div>
+            </div>
+        </section>
+        <section class="container">
+            <h3>Step 3: Render</h3>
+            <button class="primary" id="run-button" disabled onclick="displayResult()">Show file</button>
+        </section>
+    </main>
+    <div id="output" />
+</body>
+
+</html>
